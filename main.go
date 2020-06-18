@@ -80,17 +80,21 @@ func handleCommandReset(update tgbotapi.Update) error {
 }
 
 func handleCommandDraw(update tgbotapi.Update) error {
-	randomParticipants, errRandom := database.GetTwoRandomParticipants(update.Message.Chat.ID)
+	return sendNewRandomParticipants(update.Message.Chat.ID)
+}
+
+func sendNewRandomParticipants(groupChatId int64) error {
+	randomParticipants, errRandom := database.GetNRandomParticipants(groupChatId, 2)
 	if errRandom != nil {
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, texts.Not_enough_participants)
+		msg := tgbotapi.NewMessage(groupChatId, texts.Not_enough_participants)
 		bot.Send(msg)
 		return nil
 	}
 	var participantsText string
 	for _, p := range randomParticipants {
-		participantsText += getFullNameOfUser(update.Message.Chat.ID, p.UserId) + "\n"
+		participantsText += getFullNameOfUser(groupChatId, p.UserId) + "\n"
 	}
-	answer := tgbotapi.NewMessage(update.Message.Chat.ID, texts.Random_participants_drawn+participantsText)
+	answer := tgbotapi.NewMessage(groupChatId, texts.Random_participants_drawn+participantsText)
 	_, err := bot.Send(answer)
 	return err
 }

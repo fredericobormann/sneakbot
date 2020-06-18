@@ -2,7 +2,6 @@ package database
 
 import (
 	"errors"
-	"fmt"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
@@ -91,17 +90,14 @@ func GetParticipants(groupChatId int64) []Participant {
 	return participants
 }
 
-func GetTwoRandomParticipants(groupChatId int64) ([2]Participant, error) {
+func GetNRandomParticipants(groupChatId int64, numberOfPeople int) ([]Participant, error) {
 	var participants []Participant
 	db.Where(Participant{GroupchatId: groupChatId}).Find(&participants)
-	if len(participants) < 2 {
-		return [2]Participant{}, errors.New("Not enough participants")
+	if len(participants) < numberOfPeople {
+		return []Participant{}, errors.New("Not enough participants")
 	}
-	r1 := rand.Intn(len(participants))
-	r2 := rand.Intn(len(participants) - 1)
-	if r2 >= r1 {
-		r2++
-	}
-	fmt.Println()
-	return [2]Participant{participants[r1], participants[r2]}, nil
+	rand.Shuffle(len(participants), func(i, j int) {
+		participants[i], participants[j] = participants[j], participants[i]
+	})
+	return participants[:numberOfPeople], nil
 }
