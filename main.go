@@ -26,7 +26,12 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	defer f.Close()
+	defer func() {
+		err := f.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	decoder := yaml.NewDecoder(f)
 	err = decoder.Decode(&cfg)
@@ -93,7 +98,10 @@ func sendPoll(update tgbotapi.Update, msgText string) error {
 	if err == nil {
 		invalidatedPoll := database.AddOrUpdateGroup(update.Message.Chat.ID, msg.MessageID)
 		if invalidatedPoll != nil {
-			bot.Send(invalidatedPoll)
+			_, err := bot.Send(invalidatedPoll)
+			if err != nil {
+				log.Println(err)
+			}
 		}
 	}
 	return err
@@ -140,7 +148,12 @@ func main() {
 	}
 
 	updates := bot.ListenForWebhook("/" + bot.Token)
-	go http.ListenAndServe("0.0.0.0:8443", nil)
+	go func() {
+		err := http.ListenAndServe("0.0.0.0:8443", nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	for update := range updates {
 		log.Printf("%+v\n", update)
