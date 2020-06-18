@@ -89,7 +89,7 @@ func handleCommandDraw(update tgbotapi.Update) error {
 }
 
 func handleCommandStop(update tgbotapi.Update) error {
-	answer := tgbotapi.NewMessage(update.Message.Chat.ID, start_message)
+	answer := tgbotapi.NewMessage(update.Message.Chat.ID, texts.Stop_message)
 	_, err := bot.Send(answer)
 	if err == nil {
 		database.DeactivateGroup(update.Message.Chat.ID)
