@@ -1,6 +1,8 @@
 package database
 
 import (
+	"errors"
+	"fmt"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
@@ -63,13 +65,19 @@ func DeactivateGroup(groupChatId int64) {
 	}
 }
 
-func AddParticipant(groupChatId int64, userId int) {
+func AddParticipant(groupChatId int64, userId int) bool {
 	var participant Participant
+	var formerParticipants []Participant
+	db.Where(Participant{GroupchatId: groupChatId, UserId: userId}).Find(&formerParticipants)
 	db.Where(Participant{GroupchatId: groupChatId, UserId: userId}).FirstOrCreate(&participant)
+	return len(formerParticipants) == 0
 }
 
-func RemoveParticipant(groupChatId int64, userId int) {
+func RemoveParticipant(groupChatId int64, userId int) bool {
+	var formerParticipants []Participant
+	db.Where(Participant{GroupchatId: groupChatId, UserId: userId}).Find(&formerParticipants)
 	db.Where(Participant{GroupchatId: groupChatId, UserId: userId}).Delete(Participant{})
+	return len(formerParticipants) > 0
 }
 
 func ResetGroup(groupChatId int64) {
@@ -80,4 +88,19 @@ func GetParticipants(groupChatId int64) []Participant {
 	var participants []Participant
 	db.Where(Participant{GroupchatId: groupChatId}).Find(&participants)
 	return participants
+}
+
+func GetTwoRandomParticipants(groupChatId int64) ([2]Participant, error) {
+	var participants []Participant
+	db.Where(Participant{GroupchatId: groupChatId}).Find(&participants)
+	if len(participants) < 2 {
+		return [2]Participant{}, errors.New("Not enough participants")
+	}
+	r1 := rand.Intn(len(participants))
+	r2 := rand.Intn(len(participants) - 1)
+	if r2 >= r1 {
+		r2++
+	}
+	fmt.Println()
+	return [2]Participant{participants[r1], participants[r2]}, nil
 }

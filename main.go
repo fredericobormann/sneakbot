@@ -73,7 +73,9 @@ func handleCommandStart(update tgbotapi.Update) error {
 
 func handleCommandReset(update tgbotapi.Update) error {
 	database.ResetGroup(update.Message.Chat.ID)
-	err := sendPoll(update, texts.Reset_message)
+	answer := tgbotapi.NewMessage(update.Message.Chat.ID, texts.Reset_message)
+	bot.Send(answer)
+	err := sendPoll(update, texts.Start_message)
 	return err
 }
 
@@ -114,7 +116,6 @@ func handleCallbackQuery(update tgbotapi.Update) {
 	} else if update.CallbackQuery.Data == "no_participant" {
 		handleDeleteParticipant(update)
 	}
-	updatePollResult(update)
 }
 
 func updatePollResult(update tgbotapi.Update) {
@@ -152,18 +153,24 @@ func getFullNameOfUser(groupChatId int64, userId int) string {
 }
 
 func handleNewParticipant(update tgbotapi.Update) {
-	database.AddParticipant(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.From.ID)
+	changed := database.AddParticipant(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.From.ID)
 	_, err := bot.AnswerCallbackQuery(tgbotapi.NewCallback(update.CallbackQuery.ID, texts.New_participant_message))
 	if err != nil {
 		log.Println(err)
 	}
+	if changed {
+		updatePollResult(update)
+	}
 }
 
 func handleDeleteParticipant(update tgbotapi.Update) {
-	database.RemoveParticipant(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.From.ID)
+	changed := database.RemoveParticipant(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.From.ID)
 	_, err := bot.AnswerCallbackQuery(tgbotapi.NewCallback(update.CallbackQuery.ID, texts.Delete_participant_message))
 	if err != nil {
 		log.Println(err)
+	}
+	if changed {
+		updatePollResult(update)
 	}
 }
 
