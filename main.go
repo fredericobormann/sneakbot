@@ -80,7 +80,17 @@ func handleCommandReset(update tgbotapi.Update) error {
 }
 
 func handleCommandDraw(update tgbotapi.Update) error {
-	answer := tgbotapi.NewMessage(update.Message.Chat.ID, texts.Start_message)
+	randomParticipants, errRandom := database.GetTwoRandomParticipants(update.Message.Chat.ID)
+	if errRandom != nil {
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, texts.Not_enough_participants)
+		bot.Send(msg)
+		return nil
+	}
+	var participantsText string
+	for _, p := range randomParticipants {
+		participantsText += getFullNameOfUser(update.Message.Chat.ID, p.UserId) + "\n"
+	}
+	answer := tgbotapi.NewMessage(update.Message.Chat.ID, texts.Random_participants_drawn+participantsText)
 	_, err := bot.Send(answer)
 	return err
 }

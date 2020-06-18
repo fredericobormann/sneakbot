@@ -16,5 +16,9 @@ var Expired_message = "Es wurde eine neue Umfrage erstellt, die ermittelt, wer d
 var New_participant_message = "Danke, für deine Unterstützung!"
 var Delete_participant_message = "Alles klar! Du wurdest erfolgreich ausgetragen!"
 
+var Not_enough_participants = "Leider haben sich nicht genug Leute eingetragen."
+
+var Random_participants_drawn = "Whoop, whoop! Diese Woche suchen folgende Leute den Film aus:\n"
+
 var Button_yes = "Ja"
 var Button_no = "Nein"
