@@ -18,6 +18,13 @@ type Config struct {
 	} `yaml:"webhook"`
 }
 
+var participationReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
+	tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData(texts.Button_yes, "yes_participant"),
+		tgbotapi.NewInlineKeyboardButtonData(texts.Button_no, "no_participant"),
+	),
+)
+
 var cfg Config
 var bot *tgbotapi.BotAPI
 
@@ -60,7 +67,7 @@ func handleMessage(update tgbotapi.Update) {
 }
 
 func handleCommandStart(update tgbotapi.Update) error {
-	err := sendPoll(update, texts.Start_message)
+	err := sendPoll(update, texts.Start_message+"\n\n"+getParticipantsText(update.Message.Chat.ID))
 	return err
 }
 
@@ -87,13 +94,7 @@ func handleCommandStop(update tgbotapi.Update) error {
 
 func sendPoll(update tgbotapi.Update, msgText string) error {
 	answer := tgbotapi.NewMessage(update.Message.Chat.ID, msgText)
-	replyMarkup := tgbotapi.NewInlineKeyboardMarkup(
-		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData(texts.Button_yes, "yes_participant"),
-			tgbotapi.NewInlineKeyboardButtonData(texts.Button_no, "no_participant"),
-		),
-	)
-	answer.ReplyMarkup = replyMarkup
+	answer.ReplyMarkup = participationReplyMarkup
 	msg, err := bot.Send(answer)
 	if err == nil {
 		invalidatedPoll := database.AddOrUpdateGroup(update.Message.Chat.ID, msg.MessageID)
@@ -113,6 +114,41 @@ func handleCallbackQuery(update tgbotapi.Update) {
 	} else if update.CallbackQuery.Data == "no_participant" {
 		handleDeleteParticipant(update)
 	}
+	updatePollResult(update)
+}
+
+func updatePollResult(update tgbotapi.Update) {
+	participantsText := getParticipantsText(update.CallbackQuery.Message.Chat.ID)
+	editedPollMessage := tgbotapi.NewEditMessageText(update.CallbackQuery.Message.Chat.ID,
+		update.CallbackQuery.Message.MessageID,
+		texts.Start_message+"\n\n"+
+			participantsText,
+	)
+	editedPollMessage.ReplyMarkup = &participationReplyMarkup
+	_, err := bot.Send(editedPollMessage)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func getParticipantsText(groupChatId int64) string {
+	participants := database.GetParticipants(groupChatId)
+	participantsText := ""
+	for _, p := range participants {
+		participantsText += getFullNameOfUser(groupChatId, p.UserId) + "\n"
+	}
+	return participantsText
+}
+
+func getFullNameOfUser(groupChatId int64, userId int) string {
+	chatmember, err := bot.GetChatMember(tgbotapi.ChatConfigWithUser{
+		ChatID: groupChatId,
+		UserID: userId,
+	})
+	if err != nil {
+		return "Unknown User"
+	}
+	return chatmember.User.FirstName + " " + chatmember.User.LastName
 }
 
 func handleNewParticipant(update tgbotapi.Update) {

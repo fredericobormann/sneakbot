@@ -1,7 +1,6 @@
 package database
 
 import (
-	"fmt"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
@@ -46,7 +45,6 @@ func AddOrUpdateGroup(groupChatId int64, latestPollId int) tgbotapi.Chattable {
 func invalidateOldPoll(groupChatId int64) tgbotapi.Chattable {
 	var checkGroup Group
 	db.Where(Group{GroupchatId: groupChatId}).First(&checkGroup)
-	fmt.Println(&checkGroup)
 	if checkGroup.GroupchatId != 0 {
 		editPoll := tgbotapi.NewEditMessageText(groupChatId, checkGroup.LatestPollId, texts.Expired_message)
 		editPoll.ReplyMarkup = nil
@@ -76,4 +74,10 @@ func RemoveParticipant(groupChatId int64, userId int) {
 
 func ResetGroup(groupChatId int64) {
 	db.Where(Participant{GroupchatId: groupChatId}).Delete(Participant{})
+}
+
+func GetParticipants(groupChatId int64) []Participant {
+	var participants []Participant
+	db.Where(Participant{GroupchatId: groupChatId}).Find(&participants)
+	return participants
 }
