@@ -239,8 +239,22 @@ func main() {
 
 	for update := range updates {
 		log.Printf("%+v\n", update)
-		if update.Message != nil {
-			handleMessage(update)
+		if update.Message != nil && update.Message.Chat.IsGroup() {
+			chatMember, _ := bot.GetChatMember(
+				tgbotapi.ChatConfigWithUser{
+					ChatID: update.Message.Chat.ID,
+					UserID: update.Message.From.ID,
+				},
+			)
+			if chatMember.IsCreator() || chatMember.IsAdministrator() {
+				handleMessage(update)
+			}
+		} else if update.Message != nil {
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, texts.No_groupchat)
+			_, err := bot.Send(msg)
+			if err != nil {
+				log.Println(err)
+			}
 		} else if update.CallbackQuery != nil {
 			handleCallbackQuery(update)
 		}
