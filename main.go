@@ -40,8 +40,6 @@ func handleMessage(update tgbotapi.Update) {
 	if strings.HasPrefix(msgtext, "/") {
 		if strings.HasPrefix(msgtext, "/start") {
 			err = handleCommandStart(update)
-		} else if strings.HasPrefix(msgtext, "/resend") {
-			err = handleCommandResend(update)
 		} else if strings.HasPrefix(msgtext, "/reset") {
 			err = handleCommandReset(update)
 		} else if strings.HasPrefix(msgtext, "/draw") {
@@ -56,15 +54,6 @@ func handleMessage(update tgbotapi.Update) {
 }
 
 func handleCommandStart(update tgbotapi.Update) error {
-	answer := tgbotapi.NewMessage(update.Message.Chat.ID, start_message)
-	msg, err := bot.Send(answer)
-	if err == nil {
-		database.AddOrUpdateGroup(update.Message.Chat.ID, msg.MessageID)
-	}
-	return err
-}
-
-func handleCommandResend(update tgbotapi.Update) error {
 	answer := tgbotapi.NewMessage(update.Message.Chat.ID, start_message)
 	msg, err := bot.Send(answer)
 	if err == nil {
