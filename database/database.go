@@ -2,8 +2,10 @@ package database
 
 import (
 	"fmt"
+	"github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	"sneakbot/texts"
 )
 
 var db *gorm.DB
@@ -26,11 +28,24 @@ func init() {
 	db.AutoMigrate(&Group{})
 }
 
-func AddOrUpdateGroup(groupChatId int64, latestPollId int) {
+func AddOrUpdateGroup(groupChatId int64, latestPollId int) tgbotapi.Chattable {
+	invalidatedPoll := invalidateOldPoll(groupChatId)
 	var group Group
 	t := true
 	db.Where(Group{GroupchatId: groupChatId}).Assign(Group{LatestPollId: latestPollId, Activated: &t}).FirstOrCreate(&group)
-	fmt.Println(group)
+	return invalidatedPoll
+}
+
+func invalidateOldPoll(groupChatId int64) tgbotapi.Chattable {
+	var checkGroup Group
+	db.Where(Group{GroupchatId: groupChatId}).First(&checkGroup)
+	fmt.Println(&checkGroup)
+	if checkGroup.GroupchatId != 0 {
+		editPoll := tgbotapi.NewEditMessageText(groupChatId, checkGroup.LatestPollId, texts.Start_message+"\n"+texts.Expired_message)
+		editPoll.ReplyMarkup = nil
+		return editPoll
+	}
+	return nil
 }
 
 func DeactivateGroup(groupChatId int64) {

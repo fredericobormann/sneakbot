@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"sneakbot/database"
+	"sneakbot/texts"
 	"strings"
 )
 
@@ -54,16 +55,26 @@ func handleMessage(update tgbotapi.Update) {
 }
 
 func handleCommandStart(update tgbotapi.Update) error {
-	answer := tgbotapi.NewMessage(update.Message.Chat.ID, start_message)
+	answer := tgbotapi.NewMessage(update.Message.Chat.ID, texts.Start_message)
+	replyMarkup := tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData(texts.Button_yes, "yes"),
+			tgbotapi.NewInlineKeyboardButtonData(texts.Button_no, "no"),
+		),
+	)
+	answer.ReplyMarkup = replyMarkup
 	msg, err := bot.Send(answer)
 	if err == nil {
-		database.AddOrUpdateGroup(update.Message.Chat.ID, msg.MessageID)
+		invalidatedPoll := database.AddOrUpdateGroup(update.Message.Chat.ID, msg.MessageID)
+		if invalidatedPoll != nil {
+			bot.Send(invalidatedPoll)
+		}
 	}
 	return err
 }
 
 func handleCommandReset(update tgbotapi.Update) error {
-	answer := tgbotapi.NewMessage(update.Message.Chat.ID, start_message)
+	answer := tgbotapi.NewMessage(update.Message.Chat.ID, texts.Start_message)
 	msg, err := bot.Send(answer)
 	if err == nil {
 		database.AddOrUpdateGroup(update.Message.Chat.ID, msg.MessageID)
@@ -72,7 +83,7 @@ func handleCommandReset(update tgbotapi.Update) error {
 }
 
 func handleCommandDraw(update tgbotapi.Update) error {
-	answer := tgbotapi.NewMessage(update.Message.Chat.ID, start_message)
+	answer := tgbotapi.NewMessage(update.Message.Chat.ID, texts.Start_message)
 	_, err := bot.Send(answer)
 	return err
 }
