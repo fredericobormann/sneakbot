@@ -55,30 +55,13 @@ func handleMessage(update tgbotapi.Update) {
 }
 
 func handleCommandStart(update tgbotapi.Update) error {
-	answer := tgbotapi.NewMessage(update.Message.Chat.ID, texts.Start_message)
-	replyMarkup := tgbotapi.NewInlineKeyboardMarkup(
-		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData(texts.Button_yes, "yes"),
-			tgbotapi.NewInlineKeyboardButtonData(texts.Button_no, "no"),
-		),
-	)
-	answer.ReplyMarkup = replyMarkup
-	msg, err := bot.Send(answer)
-	if err == nil {
-		invalidatedPoll := database.AddOrUpdateGroup(update.Message.Chat.ID, msg.MessageID)
-		if invalidatedPoll != nil {
-			bot.Send(invalidatedPoll)
-		}
-	}
+	err := sendPoll(update, texts.Start_message)
 	return err
 }
 
 func handleCommandReset(update tgbotapi.Update) error {
-	answer := tgbotapi.NewMessage(update.Message.Chat.ID, texts.Start_message)
-	msg, err := bot.Send(answer)
-	if err == nil {
-		database.AddOrUpdateGroup(update.Message.Chat.ID, msg.MessageID)
-	}
+	database.ResetGroup(update.Message.Chat.ID)
+	err := sendPoll(update, texts.Reset_message)
 	return err
 }
 
@@ -93,6 +76,25 @@ func handleCommandStop(update tgbotapi.Update) error {
 	_, err := bot.Send(answer)
 	if err == nil {
 		database.DeactivateGroup(update.Message.Chat.ID)
+	}
+	return err
+}
+
+func sendPoll(update tgbotapi.Update, msgText string) error {
+	answer := tgbotapi.NewMessage(update.Message.Chat.ID, msgText)
+	replyMarkup := tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData(texts.Button_yes, "yes_participant"),
+			tgbotapi.NewInlineKeyboardButtonData(texts.Button_no, "no_participant"),
+		),
+	)
+	answer.ReplyMarkup = replyMarkup
+	msg, err := bot.Send(answer)
+	if err == nil {
+		invalidatedPoll := database.AddOrUpdateGroup(update.Message.Chat.ID, msg.MessageID)
+		if invalidatedPoll != nil {
+			bot.Send(invalidatedPoll)
+		}
 	}
 	return err
 }

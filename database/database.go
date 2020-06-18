@@ -17,6 +17,12 @@ type Group struct {
 	Activated    *bool `gorm:"default:true"`
 }
 
+type Participant struct {
+	gorm.Model
+	GroupchatId int64
+	UserId      int
+}
+
 func init() {
 	var err error
 	db, err = gorm.Open("sqlite3", "data.db")
@@ -26,6 +32,7 @@ func init() {
 
 	// Migrate the schema
 	db.AutoMigrate(&Group{})
+	db.AutoMigrate(&Participant{})
 }
 
 func AddOrUpdateGroup(groupChatId int64, latestPollId int) tgbotapi.Chattable {
@@ -41,7 +48,7 @@ func invalidateOldPoll(groupChatId int64) tgbotapi.Chattable {
 	db.Where(Group{GroupchatId: groupChatId}).First(&checkGroup)
 	fmt.Println(&checkGroup)
 	if checkGroup.GroupchatId != 0 {
-		editPoll := tgbotapi.NewEditMessageText(groupChatId, checkGroup.LatestPollId, texts.Start_message+"\n"+texts.Expired_message)
+		editPoll := tgbotapi.NewEditMessageText(groupChatId, checkGroup.LatestPollId, texts.Expired_message)
 		editPoll.ReplyMarkup = nil
 		return editPoll
 	}
@@ -56,4 +63,17 @@ func DeactivateGroup(groupChatId int64) {
 		group.Activated = &f
 		db.Save(&group)
 	}
+}
+
+func AddParticipant(groupChatId int64, userId int) {
+	var participant Participant
+	db.Where(Participant{GroupchatId: groupChatId, UserId: userId}).FirstOrCreate(&participant)
+}
+
+func RemoveParticipant(groupChatId int64, userId int) {
+	db.Where(Participant{GroupchatId: groupChatId, UserId: userId}).Delete(Participant{})
+}
+
+func ResetGroup(groupChatId int64) {
+	db.Where(Participant{GroupchatId: groupChatId}).Delete(Participant{})
 }
