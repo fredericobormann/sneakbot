@@ -99,6 +99,30 @@ func sendPoll(update tgbotapi.Update, msgText string) error {
 	return err
 }
 
+func handleCallbackQuery(update tgbotapi.Update) {
+	if update.CallbackQuery.Data == "yes_participant" {
+		handleNewParticipant(update)
+	} else if update.CallbackQuery.Data == "no_participant" {
+		handleDeleteParticipant(update)
+	}
+}
+
+func handleNewParticipant(update tgbotapi.Update) {
+	database.AddParticipant(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.From.ID)
+	_, err := bot.AnswerCallbackQuery(tgbotapi.NewCallback(update.CallbackQuery.ID, texts.New_participant_message))
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+func handleDeleteParticipant(update tgbotapi.Update) {
+	database.RemoveParticipant(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.From.ID)
+	_, err := bot.AnswerCallbackQuery(tgbotapi.NewCallback(update.CallbackQuery.ID, texts.Delete_participant_message))
+	if err != nil {
+		log.Println(err)
+	}
+}
+
 func main() {
 	var err error
 	bot, err = tgbotapi.NewBotAPI(cfg.Webhook.ApiToken)
@@ -122,6 +146,8 @@ func main() {
 		log.Printf("%+v\n", update)
 		if update.Message != nil {
 			handleMessage(update)
+		} else if update.CallbackQuery != nil {
+			handleCallbackQuery(update)
 		}
 	}
 }

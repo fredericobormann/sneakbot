@@ -13,5 +13,8 @@ var Stop_message = "Das automatische Auslosen ist jetzt deaktiviert."
 var Expired_message = "Es wurde eine neue Umfrage erstellt, die ermittelt, wer den Film aussucht. Bitte verwende diese, " +
 	"um dich zu melden oder auszutragen."
 
+var New_participant_message = "Danke, für deine Unterstützung!"
+var Delete_participant_message = "Alles klar! Du wurdest erfolgreich ausgetragen!"
+
 var Button_yes = "Ja"
 var Button_no = "Nein"
