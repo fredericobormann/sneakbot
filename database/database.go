@@ -101,3 +101,10 @@ func GetNRandomParticipants(groupChatId int64, numberOfPeople int) ([]Participan
 	})
 	return participants[:numberOfPeople], nil
 }
+
+func GetAllGroups() []Group {
+	var groups []Group
+	t := true
+	db.Where(Group{Activated: &t}).Find(&groups)
+	return groups
+}

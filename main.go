@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/go-co-op/gocron"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
 	"gopkg.in/yaml.v2"
 	"log"
@@ -9,6 +10,7 @@ import (
 	"sneakbot/database"
 	"sneakbot/texts"
 	"strings"
+	"time"
 )
 
 type Config struct {
@@ -74,7 +76,10 @@ func handleCommandStart(update tgbotapi.Update) error {
 func handleCommandReset(update tgbotapi.Update) error {
 	database.ResetGroup(update.Message.Chat.ID)
 	answer := tgbotapi.NewMessage(update.Message.Chat.ID, texts.Reset_message)
-	bot.Send(answer)
+	_, errSend := bot.Send(answer)
+	if errSend != nil {
+		log.Fatal(errSend)
+	}
 	err := sendPoll(update, texts.Start_message)
 	return err
 }
@@ -87,7 +92,10 @@ func sendNewRandomParticipants(groupChatId int64) error {
 	randomParticipants, errRandom := database.GetNRandomParticipants(groupChatId, 2)
 	if errRandom != nil {
 		msg := tgbotapi.NewMessage(groupChatId, texts.Not_enough_participants)
-		bot.Send(msg)
+		_, errSend := bot.Send(msg)
+		if errSend != nil {
+			log.Fatal(errSend)
+		}
 		return nil
 	}
 	var participantsText string
@@ -97,6 +105,16 @@ func sendNewRandomParticipants(groupChatId int64) error {
 	answer := tgbotapi.NewMessage(groupChatId, texts.Random_participants_drawn+participantsText)
 	_, err := bot.Send(answer)
 	return err
+}
+
+func sendAllNewRandomParticipants() {
+	groups := database.GetAllGroups()
+	for _, g := range groups {
+		err := sendNewRandomParticipants(g.GroupchatId)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 }
 
 func handleCommandStop(update tgbotapi.Update) error {
@@ -211,6 +229,13 @@ func main() {
 			log.Fatal(err)
 		}
 	}()
+
+	scheduler := gocron.NewScheduler(time.UTC)
+	_, errScheduler := scheduler.Every(1).Wednesday().At("12:00:00").Do(sendAllNewRandomParticipants)
+	if errScheduler != nil {
+		log.Println(errScheduler)
+	}
+	scheduler.StartAsync()
 
 	for update := range updates {
 		log.Printf("%+v\n", update)
