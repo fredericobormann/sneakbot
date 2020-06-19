@@ -239,7 +239,7 @@ func main() {
 
 	for update := range updates {
 		log.Printf("%+v\n", update)
-		if update.Message != nil && update.Message.Chat.IsGroup() {
+		if update.Message != nil && (update.Message.Chat.IsGroup() || update.Message.Chat.IsSuperGroup()) {
 			chatMember, _ := bot.GetChatMember(
 				tgbotapi.ChatConfigWithUser{
 					ChatID: update.Message.Chat.ID,
