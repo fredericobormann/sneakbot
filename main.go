@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/go-co-op/gocron"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
 	"gopkg.in/yaml.v2"
@@ -166,7 +167,12 @@ func updatePollResult(update tgbotapi.Update) {
 
 func getParticipantsText(groupChatId int64) string {
 	participants := database.GetParticipants(groupChatId)
-	participantsText := ""
+	var participantsText string
+	if len(participants) == 1 {
+		participantsText = fmt.Sprintf(texts.Participants_message_one, len(participants))
+	} else {
+		participantsText = fmt.Sprintf(texts.Participants_message_many, len(participants))
+	}
 	for _, p := range participants {
 		participantsText += getFullNameOfUser(groupChatId, p.UserId) + "\n"
 	}
