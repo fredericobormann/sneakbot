@@ -6,6 +6,9 @@ var Start_message = "Beep beep. Hallo, ich bin der SneakBot! Ich lose jeden Mitt
 	"Woche aussucht. Bitte gebt unten an, ob ihr bei der Auslosung berücksichtigt werden wollt. Der Button für nein ist " +
 	"nur zum wieder austragen aus der Liste, wenn ihr schon eingetragen seid."
 
+var Participants_message_one = "Momentan eingetragen (%d Person):\n"
+var Participants_message_many = "Momentan eingetragen (%d Personen):\n"
+
 var Reset_message = "Beep beep. Die Liste der eingetragenen Personen wurde zurückgesetzt. Bitte tragt euch erneut ein, falls " +
 	"ihr bei der Filmauswahl helfen könnt."
 
