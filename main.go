@@ -2,14 +2,14 @@ package main
 
 import (
 	"fmt"
+	"github.com/fredericobormann/sneakbot/database"
+	"github.com/fredericobormann/sneakbot/texts"
 	"github.com/go-co-op/gocron"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
 	"gopkg.in/yaml.v2"
 	"log"
 	"net/http"
 	"os"
-	"sneakbot/database"
-	"sneakbot/texts"
 	"strings"
 	"time"
 )
