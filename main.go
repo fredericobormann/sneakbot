@@ -31,6 +31,8 @@ var participationReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
 var cfg Config
 var bot *tgbotapi.BotAPI
 
+var db *database.Datastore
+
 func init() {
 	f, err := os.Open("config.yml")
 	if err != nil {
@@ -48,6 +50,8 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	db = database.New()
 }
 
 func handleMessage(update tgbotapi.Update) {
@@ -75,7 +79,7 @@ func handleCommandStart(update tgbotapi.Update) error {
 }
 
 func handleCommandReset(update tgbotapi.Update) error {
-	database.ResetGroup(update.Message.Chat.ID)
+	db.ResetGroup(update.Message.Chat.ID)
 	answer := tgbotapi.NewMessage(update.Message.Chat.ID, texts.Reset_message)
 	_, errSend := bot.Send(answer)
 	if errSend != nil {
@@ -90,7 +94,7 @@ func handleCommandDraw(update tgbotapi.Update) error {
 }
 
 func sendNewRandomParticipants(groupChatId int64) error {
-	randomParticipants, errRandom := database.GetNRandomParticipants(groupChatId, 2)
+	randomParticipants, errRandom := db.GetNRandomParticipants(groupChatId, 2)
 	if errRandom != nil {
 		msg := tgbotapi.NewMessage(groupChatId, texts.Not_enough_participants)
 		_, errSend := bot.Send(msg)
@@ -109,7 +113,7 @@ func sendNewRandomParticipants(groupChatId int64) error {
 }
 
 func sendAllNewRandomParticipants() {
-	groups := database.GetAllGroups()
+	groups := db.GetAllGroups()
 	for _, g := range groups {
 		err := sendNewRandomParticipants(g.GroupchatId)
 		if err != nil {
@@ -122,7 +126,7 @@ func handleCommandStop(update tgbotapi.Update) error {
 	answer := tgbotapi.NewMessage(update.Message.Chat.ID, texts.Stop_message)
 	_, err := bot.Send(answer)
 	if err == nil {
-		database.DeactivateGroup(update.Message.Chat.ID)
+		db.DeactivateGroup(update.Message.Chat.ID)
 	}
 	return err
 }
@@ -132,7 +136,7 @@ func sendPoll(update tgbotapi.Update, msgText string) error {
 	answer.ReplyMarkup = participationReplyMarkup
 	msg, err := bot.Send(answer)
 	if err == nil {
-		invalidatedPoll := database.AddOrUpdateGroup(update.Message.Chat.ID, msg.MessageID)
+		invalidatedPoll := db.AddOrUpdateGroup(update.Message.Chat.ID, msg.MessageID)
 		if invalidatedPoll != nil {
 			_, err := bot.Send(invalidatedPoll)
 			if err != nil {
@@ -166,7 +170,7 @@ func updatePollResult(update tgbotapi.Update) {
 }
 
 func getParticipantsText(groupChatId int64) string {
-	participants := database.GetParticipants(groupChatId)
+	participants := db.GetParticipants(groupChatId)
 	var participantsText string
 	if len(participants) == 1 {
 		participantsText = fmt.Sprintf(texts.Participants_message_one, len(participants))
@@ -191,7 +195,7 @@ func getFullNameOfUser(groupChatId int64, userId int) string {
 }
 
 func handleNewParticipant(update tgbotapi.Update) {
-	changed := database.AddParticipant(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.From.ID)
+	changed := db.AddParticipant(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.From.ID)
 	_, err := bot.AnswerCallbackQuery(tgbotapi.NewCallback(update.CallbackQuery.ID, texts.New_participant_message))
 	if err != nil {
 		log.Println(err)
@@ -202,7 +206,7 @@ func handleNewParticipant(update tgbotapi.Update) {
 }
 
 func handleDeleteParticipant(update tgbotapi.Update) {
-	changed := database.RemoveParticipant(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.From.ID)
+	changed := db.RemoveParticipant(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.From.ID)
 	_, err := bot.AnswerCallbackQuery(tgbotapi.NewCallback(update.CallbackQuery.ID, texts.Delete_participant_message))
 	if err != nil {
 		log.Println(err)
