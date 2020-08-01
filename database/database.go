@@ -2,6 +2,7 @@ package database
 
 import (
 	"errors"
+	"github.com/fredericobormann/sneakbot/models"
 	"github.com/fredericobormann/sneakbot/texts"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/jinzhu/gorm"
@@ -9,44 +10,36 @@ import (
 	"math/rand"
 )
 
-var db *gorm.DB
-
-type Group struct {
-	gorm.Model
-	GroupchatId  int64
-	LatestPollId int
-	Activated    *bool `gorm:"default:true"`
+type Datastore struct {
+	DB *gorm.DB
 }
 
-type Participant struct {
-	gorm.Model
-	GroupchatId int64
-	UserId      int
-}
-
-func init() {
-	var err error
-	db, err = gorm.Open("sqlite3", "data.db")
+func New() *Datastore {
+	db, err := gorm.Open("sqlite3", "data.db")
 	if err != nil {
 		panic("failed to connect database")
 	}
 
 	// Migrate the schema
-	db.AutoMigrate(&Group{})
-	db.AutoMigrate(&Participant{})
+	db.AutoMigrate(&models.Group{})
+	db.AutoMigrate(&models.Participant{})
+
+	return &Datastore{
+		DB: db,
+	}
 }
 
-func AddOrUpdateGroup(groupChatId int64, latestPollId int) tgbotapi.Chattable {
-	invalidatedPoll := invalidateOldPoll(groupChatId)
-	var group Group
+func (store *Datastore) AddOrUpdateGroup(groupChatId int64, latestPollId int) tgbotapi.Chattable {
+	invalidatedPoll := store.invalidateOldPoll(groupChatId)
+	var group models.Group
 	t := true
-	db.Where(Group{GroupchatId: groupChatId}).Assign(Group{LatestPollId: latestPollId, Activated: &t}).FirstOrCreate(&group)
+	store.DB.Where(models.Group{GroupchatId: groupChatId}).Assign(models.Group{LatestPollId: latestPollId, Activated: &t}).FirstOrCreate(&group)
 	return invalidatedPoll
 }
 
-func invalidateOldPoll(groupChatId int64) tgbotapi.Chattable {
-	var checkGroup Group
-	db.Where(Group{GroupchatId: groupChatId}).First(&checkGroup)
+func (store *Datastore) invalidateOldPoll(groupChatId int64) tgbotapi.Chattable {
+	var checkGroup models.Group
+	store.DB.Where(models.Group{GroupchatId: groupChatId}).First(&checkGroup)
 	if checkGroup.GroupchatId != 0 {
 		editPoll := tgbotapi.NewEditMessageText(groupChatId, checkGroup.LatestPollId, texts.Expired_message)
 		editPoll.ReplyMarkup = nil
@@ -55,46 +48,46 @@ func invalidateOldPoll(groupChatId int64) tgbotapi.Chattable {
 	return nil
 }
 
-func DeactivateGroup(groupChatId int64) {
+func (store *Datastore) DeactivateGroup(groupChatId int64) {
 	f := false
-	var group Group
-	db.Where(Group{GroupchatId: groupChatId}).First(&group)
+	var group models.Group
+	store.DB.Where(models.Group{GroupchatId: groupChatId}).First(&group)
 	if group.Activated != nil {
 		group.Activated = &f
-		db.Save(&group)
+		store.DB.Save(&group)
 	}
 }
 
-func AddParticipant(groupChatId int64, userId int) bool {
-	var participant Participant
-	var formerParticipants []Participant
-	db.Where(Participant{GroupchatId: groupChatId, UserId: userId}).Find(&formerParticipants)
-	db.Where(Participant{GroupchatId: groupChatId, UserId: userId}).FirstOrCreate(&participant)
+func (store *Datastore) AddParticipant(groupChatId int64, userId int) bool {
+	var participant models.Participant
+	var formerParticipants []models.Participant
+	store.DB.Where(models.Participant{GroupchatId: groupChatId, UserId: userId}).Find(&formerParticipants)
+	store.DB.Where(models.Participant{GroupchatId: groupChatId, UserId: userId}).FirstOrCreate(&participant)
 	return len(formerParticipants) == 0
 }
 
-func RemoveParticipant(groupChatId int64, userId int) bool {
-	var formerParticipants []Participant
-	db.Where(Participant{GroupchatId: groupChatId, UserId: userId}).Find(&formerParticipants)
-	db.Where(Participant{GroupchatId: groupChatId, UserId: userId}).Delete(Participant{})
+func (store *Datastore) RemoveParticipant(groupChatId int64, userId int) bool {
+	var formerParticipants []models.Participant
+	store.DB.Where(models.Participant{GroupchatId: groupChatId, UserId: userId}).Find(&formerParticipants)
+	store.DB.Where(models.Participant{GroupchatId: groupChatId, UserId: userId}).Delete(models.Participant{})
 	return len(formerParticipants) > 0
 }
 
-func ResetGroup(groupChatId int64) {
-	db.Where(Participant{GroupchatId: groupChatId}).Delete(Participant{})
+func (store *Datastore) ResetGroup(groupChatId int64) {
+	store.DB.Where(models.Participant{GroupchatId: groupChatId}).Delete(models.Participant{})
 }
 
-func GetParticipants(groupChatId int64) []Participant {
-	var participants []Participant
-	db.Where(Participant{GroupchatId: groupChatId}).Find(&participants)
+func (store *Datastore) GetParticipants(groupChatId int64) []models.Participant {
+	var participants []models.Participant
+	store.DB.Where(models.Participant{GroupchatId: groupChatId}).Find(&participants)
 	return participants
 }
 
-func GetNRandomParticipants(groupChatId int64, numberOfPeople int) ([]Participant, error) {
-	var participants []Participant
-	db.Where(Participant{GroupchatId: groupChatId}).Find(&participants)
+func (store *Datastore) GetNRandomParticipants(groupChatId int64, numberOfPeople int) ([]models.Participant, error) {
+	var participants []models.Participant
+	store.DB.Where(models.Participant{GroupchatId: groupChatId}).Find(&participants)
 	if len(participants) < numberOfPeople {
-		return []Participant{}, errors.New("Not enough participants")
+		return []models.Participant{}, errors.New("Not enough participants")
 	}
 	rand.Shuffle(len(participants), func(i, j int) {
 		participants[i], participants[j] = participants[j], participants[i]
@@ -102,9 +95,9 @@ func GetNRandomParticipants(groupChatId int64, numberOfPeople int) ([]Participan
 	return participants[:numberOfPeople], nil
 }
 
-func GetAllGroups() []Group {
-	var groups []Group
+func (store *Datastore) GetAllGroups() []models.Group {
+	var groups []models.Group
 	t := true
-	db.Where(Group{Activated: &t}).Find(&groups)
+	store.DB.Where(models.Group{Activated: &t}).Find(&groups)
 	return groups
 }
