@@ -97,7 +97,7 @@ func (store *Datastore) GetNRandomParticipants(groupChatId int64, numberOfPeople
 
 func (store *Datastore) GetAllParticipantsWithoutName() []models.Participant {
 	var participants []models.Participant
-	store.DB.Where("first_name IS NOT NULL AND last_name IS NOT NULL").Find(&participants)
+	store.DB.Where("first_name IS NULL AND last_name IS NULL").Find(&participants)
 	return participants
 }
 

@@ -43,6 +43,8 @@ func main() {
 		log.Fatal(err)
 	}
 
+	h.AddNamesOfUsersToDB()
+
 	updates := bot.ListenForWebhook("/" + bot.Token)
 	go func() {
 		err := http.ListenAndServe("0.0.0.0:8443", nil)
