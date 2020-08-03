@@ -79,7 +79,7 @@ func (handler *Handler) sendNewRandomParticipants(groupChatId int64) error {
 	}
 	var participantsText string
 	for _, p := range randomParticipants {
-		participantsText += handler.getFullNameOfUser(groupChatId, p.UserId) + "\n"
+		participantsText += p.GetFullName() + "\n"
 	}
 	answer := tgbotapi.NewMessage(groupChatId, texts.Random_participants_drawn+participantsText)
 	_, err := handler.Bot.Send(answer)
@@ -152,24 +152,13 @@ func (handler *Handler) getParticipantsText(groupChatId int64) string {
 		participantsText = fmt.Sprintf(texts.Participants_message_many, len(participants))
 	}
 	for _, p := range participants {
-		participantsText += handler.getFullNameOfUser(groupChatId, p.UserId) + "\n"
+		participantsText += p.GetFullName() + "\n"
 	}
 	return participantsText
 }
 
-func (handler *Handler) getFullNameOfUser(groupChatId int64, userId int) string {
-	chatmember, err := handler.Bot.GetChatMember(tgbotapi.ChatConfigWithUser{
-		ChatID: groupChatId,
-		UserID: userId,
-	})
-	if err != nil {
-		return "Unknown User"
-	}
-	return chatmember.User.FirstName + " " + chatmember.User.LastName
-}
-
 func (handler *Handler) handleNewParticipant(update tgbotapi.Update) {
-	changed := handler.Datastore.AddParticipant(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.From.ID)
+	changed := handler.Datastore.AddParticipant(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.From.ID, update.CallbackQuery.From.FirstName, update.CallbackQuery.From.LastName)
 	_, err := handler.Bot.AnswerCallbackQuery(tgbotapi.NewCallback(update.CallbackQuery.ID, texts.New_participant_message))
 	if err != nil {
 		log.Println(err)
