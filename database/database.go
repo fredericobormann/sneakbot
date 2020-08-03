@@ -58,11 +58,11 @@ func (store *Datastore) DeactivateGroup(groupChatId int64) {
 	}
 }
 
-func (store *Datastore) AddParticipant(groupChatId int64, userId int) bool {
+func (store *Datastore) AddParticipant(groupChatId int64, userId int, firstName string, lastName string) bool {
 	var participant models.Participant
 	var formerParticipants []models.Participant
 	store.DB.Where(models.Participant{GroupchatId: groupChatId, UserId: userId}).Find(&formerParticipants)
-	store.DB.Where(models.Participant{GroupchatId: groupChatId, UserId: userId}).FirstOrCreate(&participant)
+	store.DB.Where(models.Participant{GroupchatId: groupChatId, UserId: userId, FirstName: firstName, LastName: lastName}).FirstOrCreate(&participant)
 	return len(formerParticipants) == 0
 }
 
@@ -93,6 +93,17 @@ func (store *Datastore) GetNRandomParticipants(groupChatId int64, numberOfPeople
 		participants[i], participants[j] = participants[j], participants[i]
 	})
 	return participants[:numberOfPeople], nil
+}
+
+func (store *Datastore) GetAllParticipantsWithoutName() []models.Participant {
+	var participants []models.Participant
+	store.DB.Where("first_name IS NOT NULL AND last_name IS NOT NULL").Find(&participants)
+	return participants
+}
+
+func (store *Datastore) SetNameOfParticipant(userID int, firstName string, lastName string) {
+	var participant models.Participant
+	store.DB.Model(&participant).Where("user_id = ?", userID).Update("first_name", firstName).Update("last_name", lastName)
 }
 
 func (store *Datastore) GetAllGroups() []models.Group {
