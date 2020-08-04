@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"github.com/jinzhu/gorm"
+	"strings"
 )
 
 type Participant struct {
@@ -14,7 +15,10 @@ type Participant struct {
 }
 
 func (p Participant) GetFullName() string {
-	return p.FirstName + " " + p.LastName
+	fullName := p.FirstName + " " + p.LastName
+	trimmedName := strings.TrimSpace(fullName)
+	escapedName := strings.ReplaceAll(trimmedName, ".", "\\.")
+	return escapedName
 }
 
 func (p Participant) GetMarkup() string {
