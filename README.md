@@ -9,4 +9,3 @@ It uses a sqlite database to store the people who agreed to help.
 
 ## Known problems
 * Automatic draw does not work at the moment due to a bug in the gocron package.
-* Telegram does not allow to fetch usernames of users that did not interact with the bot recently, so storing usernames in the database will be necessary.
