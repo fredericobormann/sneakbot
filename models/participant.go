@@ -1,6 +1,9 @@
 package models
 
-import "github.com/jinzhu/gorm"
+import (
+	"fmt"
+	"github.com/jinzhu/gorm"
+)
 
 type Participant struct {
 	gorm.Model
@@ -12,4 +15,8 @@ type Participant struct {
 
 func (p Participant) GetFullName() string {
 	return p.FirstName + " " + p.LastName
+}
+
+func (p Participant) GetMarkup() string {
+	return fmt.Sprintf("[%v](tg://user?id=%d)", p.GetFullName(), p.UserId)
 }
