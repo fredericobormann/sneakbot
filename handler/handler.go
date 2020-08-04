@@ -79,9 +79,10 @@ func (handler *Handler) sendNewRandomParticipants(groupChatId int64) error {
 	}
 	var participantsText string
 	for _, p := range randomParticipants {
-		participantsText += p.GetFullName() + "\n"
+		participantsText += p.GetMarkup() + "\n"
 	}
 	answer := tgbotapi.NewMessage(groupChatId, texts.Random_participants_drawn+participantsText)
+	answer.ParseMode = "MarkdownV2"
 	_, err := handler.Bot.Send(answer)
 	return err
 }
@@ -107,6 +108,7 @@ func (handler *Handler) handleCommandStop(update tgbotapi.Update) error {
 
 func (handler *Handler) sendPoll(update tgbotapi.Update, msgText string) error {
 	answer := tgbotapi.NewMessage(update.Message.Chat.ID, msgText)
+	answer.ParseMode = "MarkdownV2"
 	answer.ReplyMarkup = participationReplyMarkup
 	msg, err := handler.Bot.Send(answer)
 	if err == nil {
@@ -136,6 +138,7 @@ func (handler *Handler) updatePollResult(update tgbotapi.Update) {
 		texts.Start_message+"\n\n"+
 			participantsText,
 	)
+	editedPollMessage.ParseMode = "MarkdownV2"
 	editedPollMessage.ReplyMarkup = &participationReplyMarkup
 	_, err := handler.Bot.Send(editedPollMessage)
 	if err != nil {
@@ -152,7 +155,7 @@ func (handler *Handler) getParticipantsText(groupChatId int64) string {
 		participantsText = fmt.Sprintf(texts.Participants_message_many, len(participants))
 	}
 	for _, p := range participants {
-		participantsText += p.GetFullName() + "\n"
+		participantsText += p.GetMarkup() + "\n"
 	}
 	return participantsText
 }
