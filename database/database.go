@@ -8,6 +8,7 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"math/rand"
+	"time"
 )
 
 type Datastore struct {
@@ -23,6 +24,7 @@ func New() *Datastore {
 	// Migrate the schema
 	db.AutoMigrate(&models.Group{})
 	db.AutoMigrate(&models.Participant{})
+	db.AutoMigrate(&models.Draw{})
 
 	return &Datastore{
 		DB: db,
@@ -92,6 +94,9 @@ func (store *Datastore) GetNRandomParticipants(groupChatId int64, numberOfPeople
 	rand.Shuffle(len(participants), func(i, j int) {
 		participants[i], participants[j] = participants[j], participants[i]
 	})
+	for _, p := range participants[:numberOfPeople] {
+		store.DB.Create(&models.Draw{Participant: p, GroupchatID: groupChatId, Time: time.Now()})
+	}
 	return participants[:numberOfPeople], nil
 }
 
