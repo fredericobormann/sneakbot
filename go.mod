@@ -3,6 +3,7 @@ module github.com/fredericobormann/sneakbot
 go 1.14
 
 require (
+	github.com/gin-gonic/gin v1.6.3
 	github.com/go-co-op/gocron v0.3.0
 	github.com/go-telegram-bot-api/telegram-bot-api v4.6.4+incompatible
 	github.com/jinzhu/gorm v1.9.15

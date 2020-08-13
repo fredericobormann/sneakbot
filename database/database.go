@@ -15,6 +15,13 @@ type Datastore struct {
 	DB *gorm.DB
 }
 
+type StatisticResult struct {
+	GroupchatID   int64
+	ParticipantID uint
+	Participant   models.Participant
+	Total         uint
+}
+
 func New() *Datastore {
 	db, err := gorm.Open("sqlite3", "data.db")
 	if err != nil {
@@ -97,6 +104,9 @@ func (store *Datastore) GetNRandomParticipants(groupChatId int64, numberOfPeople
 	for _, p := range participants[:numberOfPeople] {
 		store.DB.Create(&models.Draw{Participant: p, GroupchatID: groupChatId, Time: time.Now()})
 	}
+
+	store.GetStatisticByGroupId(-125444678)
+
 	return participants[:numberOfPeople], nil
 }
 
@@ -116,4 +126,15 @@ func (store *Datastore) GetAllGroups() []models.Group {
 	t := true
 	store.DB.Where(models.Group{Activated: &t}).Find(&groups)
 	return groups
+}
+
+func (store *Datastore) GetStatisticByGroupId(groupchatID int64) []StatisticResult {
+	var statisticResults []StatisticResult
+	store.DB.Table("draws").Select("groupchat_id, participant_id, count(id) as total").Where("deleted_at IS NULL AND groupchat_id = ?", groupchatID).Group("groupchat_id, participant_id").Scan(&statisticResults)
+	for i := range statisticResults {
+		var participant models.Participant
+		store.DB.Where("id = ?", statisticResults[i].ParticipantID).First(&participant)
+		statisticResults[i].Participant = participant
+	}
+	return statisticResults
 }

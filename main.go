@@ -4,6 +4,7 @@ import (
 	"github.com/fredericobormann/sneakbot/database"
 	"github.com/fredericobormann/sneakbot/handler"
 	"github.com/fredericobormann/sneakbot/texts"
+	"github.com/gin-gonic/gin"
 	"github.com/go-co-op/gocron"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
 	"gopkg.in/yaml.v2"
@@ -21,6 +22,8 @@ type Config struct {
 }
 
 func main() {
+	go StartStatisticServer()
+
 	cfg, err := readConfig()
 	if err != nil {
 		log.Fatal("Reading config unsuccessful.")
@@ -103,4 +106,16 @@ func readConfig() (*Config, error) {
 		return nil, err
 	}
 	return cfg, nil
+}
+
+func StartStatisticServer() {
+	router := gin.Default()
+	datastore := database.New()
+	statisticHandler := handler.NewStatisticHandler(datastore)
+	router.GET("/:groupchat_id", statisticHandler.HandleStatisticRequestByGroup)
+
+	err := router.Run(":8090")
+	if err != nil {
+		log.Fatal("Could not start statistic server", err)
+	}
 }
