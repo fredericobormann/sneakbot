@@ -12,6 +12,8 @@ type Participant struct {
 	UserId      int
 	FirstName   string
 	LastName    string
+	Active      *bool `gorm:"default:true"`
+	Counter     int   `gorm:"default:0"`
 }
 
 func (p Participant) GetFullName() string {
