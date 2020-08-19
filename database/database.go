@@ -66,7 +66,7 @@ func (store *Datastore) AddParticipant(groupChatId int64, userId int, firstName 
 	var participant models.Participant
 	var formerParticipants []models.Participant
 	store.DB.Where(models.Participant{GroupchatId: groupChatId, UserId: userId, Active: &t}).Find(&formerParticipants)
-	store.DB.Where(models.Participant{GroupchatId: groupChatId, UserId: userId, FirstName: firstName, LastName: lastName}).Assign(models.Participant{Active: &t}).FirstOrCreate(&participant)
+	store.DB.Where(models.Participant{GroupchatId: groupChatId, UserId: userId}).Assign(models.Participant{Active: &t, FirstName: firstName, LastName: lastName}).FirstOrCreate(&participant)
 	return len(formerParticipants) == 0
 }
 
