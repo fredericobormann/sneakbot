@@ -10,6 +10,9 @@ import (
 	"math/rand"
 )
 
+var t = true
+var f = false
+
 type Datastore struct {
 	DB *gorm.DB
 }
@@ -61,31 +64,33 @@ func (store *Datastore) DeactivateGroup(groupChatId int64) {
 func (store *Datastore) AddParticipant(groupChatId int64, userId int, firstName string, lastName string) bool {
 	var participant models.Participant
 	var formerParticipants []models.Participant
-	store.DB.Where(models.Participant{GroupchatId: groupChatId, UserId: userId}).Find(&formerParticipants)
-	store.DB.Where(models.Participant{GroupchatId: groupChatId, UserId: userId, FirstName: firstName, LastName: lastName}).FirstOrCreate(&participant)
+	store.DB.Where(models.Participant{GroupchatId: groupChatId, UserId: userId, Active: &t}).Find(&formerParticipants)
+	store.DB.Where(models.Participant{GroupchatId: groupChatId, UserId: userId, FirstName: firstName, LastName: lastName}).Assign(models.Participant{Active: &t}).FirstOrCreate(&participant)
 	return len(formerParticipants) == 0
 }
 
 func (store *Datastore) RemoveParticipant(groupChatId int64, userId int) bool {
 	var formerParticipants []models.Participant
-	store.DB.Where(models.Participant{GroupchatId: groupChatId, UserId: userId}).Find(&formerParticipants)
-	store.DB.Where(models.Participant{GroupchatId: groupChatId, UserId: userId}).Delete(models.Participant{})
+	var deletedParticipant models.Participant
+	store.DB.Where(models.Participant{GroupchatId: groupChatId, UserId: userId, Active: &t}).Find(&formerParticipants)
+	store.DB.Where(models.Participant{GroupchatId: groupChatId, UserId: userId}).Assign(models.Participant{Active: &f}).FirstOrCreate(&deletedParticipant)
 	return len(formerParticipants) > 0
 }
 
 func (store *Datastore) ResetGroup(groupChatId int64) {
-	store.DB.Where(models.Participant{GroupchatId: groupChatId}).Delete(models.Participant{})
+	store.DB.Model(models.Participant{}).Where(models.Participant{GroupchatId: groupChatId}).Updates(models.Participant{Active: &f})
 }
 
 func (store *Datastore) GetParticipants(groupChatId int64) []models.Participant {
 	var participants []models.Participant
-	store.DB.Where(models.Participant{GroupchatId: groupChatId}).Find(&participants)
+	store.DB.Where(models.Participant{GroupchatId: groupChatId, Active: &t}).Find(&participants)
 	return participants
 }
 
 func (store *Datastore) GetNRandomParticipants(groupChatId int64, numberOfPeople int) ([]models.Participant, error) {
 	var participants []models.Participant
-	store.DB.Where(models.Participant{GroupchatId: groupChatId}).Find(&participants)
+	participants = store.GetParticipants(groupChatId)
+
 	if len(participants) < numberOfPeople {
 		return []models.Participant{}, errors.New("Not enough participants")
 	}
