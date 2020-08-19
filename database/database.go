@@ -9,6 +9,7 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"math/rand"
 	"sort"
+	"time"
 )
 
 var t = true
@@ -95,6 +96,7 @@ func (store *Datastore) GetNRandomParticipants(groupChatId int64, numberOfPeople
 	if len(participants) < numberOfPeople {
 		return []models.Participant{}, errors.New("Not enough participants")
 	}
+	rand.Seed(time.Now().UnixNano())
 	rand.Shuffle(len(participants), func(i, j int) {
 		participants[i], participants[j] = participants[j], participants[i]
 	})
