@@ -8,6 +8,7 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"math/rand"
+	"sort"
 )
 
 var t = true
@@ -97,6 +98,15 @@ func (store *Datastore) GetNRandomParticipants(groupChatId int64, numberOfPeople
 	rand.Shuffle(len(participants), func(i, j int) {
 		participants[i], participants[j] = participants[j], participants[i]
 	})
+
+	sort.SliceStable(participants, func(i, j int) bool {
+		return participants[i].Counter < participants[j].Counter
+	})
+
+	for _, p := range participants[:numberOfPeople] {
+		store.DB.Where("id = ?", p.ID).Assign(models.Participant{Counter: p.Counter + 1}).FirstOrCreate(&models.Participant{})
+	}
+
 	return participants[:numberOfPeople], nil
 }
 
