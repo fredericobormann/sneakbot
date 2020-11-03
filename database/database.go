@@ -63,12 +63,24 @@ func (store *Datastore) DeactivateGroup(groupChatId int64) {
 	}
 }
 
+// AddParticipant adds a new participant to the database or reactivates an already existing participant.
+// If it's a new participants, their counter is set to the current minimum of the other counters.
 func (store *Datastore) AddParticipant(groupChatId int64, userId int, firstName string, lastName string) bool {
 	var participant models.Participant
-	var formerParticipants []models.Participant
-	store.DB.Where(models.Participant{GroupchatId: groupChatId, UserId: userId, Active: &t}).Find(&formerParticipants)
-	store.DB.Where(models.Participant{GroupchatId: groupChatId, UserId: userId}).Assign(models.Participant{Active: &t, FirstName: firstName, LastName: lastName}).FirstOrCreate(&participant)
-	return len(formerParticipants) == 0
+	var formerExistingParticipantWithIDInGroup []models.Participant
+	var formerActiveParticipantsWithIDInGroup []models.Participant
+	store.DB.Where(models.Participant{GroupchatId: groupChatId, UserId: userId}).Find(&formerExistingParticipantWithIDInGroup)
+	store.DB.Where(models.Participant{GroupchatId: groupChatId, UserId: userId, Active: &t}).Find(&formerActiveParticipantsWithIDInGroup)
+
+	if len(formerExistingParticipantWithIDInGroup) > 0 {
+		store.DB.Where(models.Participant{GroupchatId: groupChatId, UserId: userId}).Assign(models.Participant{Active: &t, FirstName: firstName, LastName: lastName}).FirstOrCreate(&participant)
+	} else {
+		var leastChosenParticipant models.Participant
+		store.DB.Where(models.Participant{GroupchatId: groupChatId, Active: &t}).Order("counter asc").First(&leastChosenParticipant)
+		store.DB.Where(models.Participant{GroupchatId: groupChatId, UserId: userId}).Assign(models.Participant{Active: &t, FirstName: firstName, LastName: lastName, Counter: leastChosenParticipant.Counter}).FirstOrCreate(&participant)
+	}
+
+	return len(formerActiveParticipantsWithIDInGroup) == 0
 }
 
 func (store *Datastore) RemoveParticipant(groupChatId int64, userId int) bool {
