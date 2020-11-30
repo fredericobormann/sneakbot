@@ -7,6 +7,3 @@ Since a truly random choosing method could take a lot of time to produce a fair 
 1. Copy the `config.yml.sample` and rename it to `config.yml`.
 1. Enter your Telegram bot API token and the URL where your bot is listening for updates. (By default sneakbot listens on port 8443 on your local machine.)
 1. Run the `main.go`
-
-## Known problems
-* Automatic draw does not work at the moment due to a bug in the gocron package.
