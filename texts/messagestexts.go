@@ -22,7 +22,7 @@ var Delete_participant_message = "Alles klar! Du wurdest erfolgreich ausgetragen
 
 var Not_enough_participants = "Leider haben sich nicht genug Leute eingetragen."
 
-var Random_participants_drawn = "Whoop, whoop\\! Diese Woche suchen folgende Leute den Film aus:\n"
+var Random_participants_drawn = "Whoop, whoop\\! Nächste Woche suchen folgende Leute den Film aus:\n"
 
 var Button_yes = "Ja"
 var Button_no = "Nein"
