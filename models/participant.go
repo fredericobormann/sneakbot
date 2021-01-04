@@ -19,7 +19,8 @@ type Participant struct {
 func (p Participant) GetFullName() string {
 	fullName := p.FirstName + " " + p.LastName
 	trimmedName := strings.TrimSpace(fullName)
-	escapedName := strings.ReplaceAll(trimmedName, ".", "\\.")
+	escapedDotsName := strings.ReplaceAll(trimmedName, ".", "\\.")
+	escapedName := strings.ReplaceAll(escapedDotsName, "-", "\\-")
 	return escapedName
 }
 
