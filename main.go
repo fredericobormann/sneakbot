@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/fredericobormann/sneakbot/database"
 	"github.com/fredericobormann/sneakbot/handler"
 	"github.com/fredericobormann/sneakbot/texts"
@@ -46,6 +47,14 @@ func main() {
 	h.AddNamesOfUsersToDB()
 
 	updates := bot.ListenForWebhook("/" + bot.Token)
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		_, indexErr := fmt.Fprint(w, "Everything works fine!")
+		if err != nil {
+			log.Fatalf("Cannot serve index handler: %v", indexErr)
+		}
+	})
+
 	go func() {
 		err := http.ListenAndServe("0.0.0.0:8443", nil)
 		if err != nil {
