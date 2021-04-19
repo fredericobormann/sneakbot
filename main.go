@@ -62,8 +62,8 @@ func main() {
 		}
 	}()
 
-	scheduler := gocron.NewScheduler(time.UTC)
-	_, errScheduler := scheduler.Every(1).Monday().At("21:00:00").Do(h.SendAllNewRandomParticipants)
+	scheduler := gocron.NewScheduler(time.Local)
+	_, errScheduler := scheduler.Every(1).Monday().At("22:00:00").Do(h.SendAllNewRandomParticipants)
 	if errScheduler != nil {
 		log.Println(errScheduler)
 	}
