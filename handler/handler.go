@@ -181,3 +181,17 @@ func (handler *Handler) handleDeleteParticipant(update tgbotapi.Update) {
 		handler.updatePollResult(update)
 	}
 }
+
+/*
+	Pssst! If you discover this, please don't tell anybody!
+*/
+
+func (handler *Handler) SendGoodByeMessage() error {
+	msg := tgbotapi.NewMessage(-1001434025290, "Bop, Beep! So long and thanks for all the fish! "+
+		"Es war schön, für euch da zu sein! Ich wünsche euch viel Spaß beim Film und bin immer für euch, falls ihr mich brauchen solltet!")
+	_, errSend := handler.Bot.Send(msg)
+	if errSend != nil {
+		log.Fatal(errSend)
+	}
+	return errSend
+}

@@ -67,6 +67,10 @@ func main() {
 	if errScheduler != nil {
 		log.Println(errScheduler)
 	}
+
+	specificTime := time.Date(2021, time.September, 13, 19, 0, 0, 0, time.Local)
+	_, _ = scheduler.Every(52).Weeks().StartAt(specificTime).Do(h.SendGoodByeMessage)
+
 	scheduler.StartAsync()
 
 	for update := range updates {
