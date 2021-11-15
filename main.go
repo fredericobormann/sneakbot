@@ -63,10 +63,6 @@ func main() {
 	}()
 
 	scheduler := gocron.NewScheduler(time.Local)
-	_, errScheduler := scheduler.Every(1).Monday().At("22:00:00").Do(h.SendAllNewRandomParticipants)
-	if errScheduler != nil {
-		log.Println(errScheduler)
-	}
 
 	specificTime := time.Date(2021, time.September, 13, 19, 0, 0, 0, time.Local)
 	_, _ = scheduler.Every(52).Weeks().StartAt(specificTime).Do(h.SendGoodByeMessage)
@@ -84,6 +80,21 @@ func main() {
 			)
 			if chatMember.IsCreator() || chatMember.IsAdministrator() {
 				h.HandleMessage(update)
+				mode := h.GetOperationMode()
+				if mode != "None" {
+					if mode == "Poll" || mode == "Both" {
+						_, errScheduler := scheduler.Every(1).Monday().At("22:00:00").Do(h.SendAllNewRandomParticipants)
+						if errScheduler != nil {
+							log.Println(errScheduler)
+						}
+					}
+					if mode == "Remind" || mode == "Both" {
+						_, errScheduler := scheduler.Every(1).Thursday().At("10:00:00").Do(h.SendReminder)
+						if errScheduler != nil {
+							log.Println(errScheduler)
+						}
+					}
+				}
 			}
 		} else if update.Message != nil {
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, texts.No_groupchat)

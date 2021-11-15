@@ -1,5 +1,7 @@
 package texts
 
+var Mode_decision_message = "Beep beep\\. In welchem Modus (Erinnerung / Auslosung / Beide) soll der SneakBot gestartet werden\\?"
+
 var No_groupchat = "Der SneakBot kann nur in Gruppen verwendet werden."
 
 var Start_message = "Beep beep\\. Hallo, ich bin der SneakBot\\! Ich lose jeden Montag aus, wer den Film für die nächste " +
@@ -26,3 +28,12 @@ var Random_participants_drawn = "Whoop, whoop\\! Nächste Woche suchen folgende 
 
 var Button_yes = "Ja"
 var Button_no = "Nein"
+
+var Reminder = "Denkt dran, euch bis heute 18:15 Uhr einzutragen!"
+
+var Mode_reminder = "Alles klar! Ich erinnere euch dann ab jetzt jeden Donnerstag an die Eintragungsdeadline!"
+
+var Mode_polling = "Alles klar! Ich lose ab jetzt wieder wöchentlich Personen aus, die einen Film aussuchen!"
+
+var Mode_both = "Alles klar, das volle Programm! Ich lose wöchentlich Film-Aussucher, und erinner euch jeden Donnerstag " +
+	"an die Eintragungsdeadline!"
