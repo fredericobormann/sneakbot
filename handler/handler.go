@@ -21,6 +21,8 @@ var participationReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
 	),
 )
 
+var operationMode = "None"
+
 func New(db *database.Datastore, bot *tgbotapi.BotAPI) *Handler {
 	return &Handler{
 		Datastore: db,
@@ -34,12 +36,18 @@ func (handler *Handler) HandleMessage(update tgbotapi.Update) {
 	if strings.HasPrefix(msgtext, "/") {
 		if strings.HasPrefix(msgtext, "/start") {
 			err = handler.handleCommandStart(update)
-		} else if strings.HasPrefix(msgtext, "/reset") {
+		} else if strings.HasPrefix(msgtext, "/reset") && (operationMode == "Poll" || operationMode == "Both") {
 			err = handler.handleCommandReset(update)
-		} else if strings.HasPrefix(msgtext, "/draw") {
+		} else if strings.HasPrefix(msgtext, "/draw") && (operationMode == "Poll" || operationMode == "Both") {
 			err = handler.handleCommandDraw(update)
 		} else if strings.HasPrefix(msgtext, "/stop") {
 			err = handler.handleCommandStop(update)
+		} else if strings.HasPrefix(msgtext, "/remind") && operationMode == "None" {
+			err = handler.handleModeCommandRemind(update, operationMode)
+		} else if strings.HasPrefix(msgtext, "/poll") && operationMode == "None" {
+			err = handler.handleModeCommandPoll(update, operationMode)
+		} else if strings.HasPrefix(msgtext, "/both") && operationMode == "None" {
+			err = handler.handleModeCommandBoth(update, operationMode)
 		}
 	}
 	if err != nil {
@@ -48,7 +56,28 @@ func (handler *Handler) HandleMessage(update tgbotapi.Update) {
 }
 
 func (handler *Handler) handleCommandStart(update tgbotapi.Update) error {
-	err := handler.sendPoll(update, texts.Start_message+"\n\n"+handler.getParticipantsText(update.Message.Chat.ID))
+	answer := tgbotapi.NewMessage(update.Message.Chat.ID, texts.Mode_decision_message)
+	_, err := handler.Bot.Send(answer)
+	return err
+}
+
+func (handler *Handler) handleModeCommandRemind(update tgbotapi.Update, mode string) error {
+	answer := tgbotapi.NewMessage(update.Message.Chat.ID, texts.Mode_reminder)
+	_, err := handler.Bot.Send(answer)
+	mode = "Remind"
+	return err
+}
+
+func (handler *Handler) handleModeCommandPoll(update tgbotapi.Update, mode string) error {
+	err := handler.sendParticipantPoll(update, texts.Start_message+"\n\n"+handler.getParticipantsText(update.Message.Chat.ID))
+	mode = "Poll"
+	return err
+}
+
+func (handler *Handler) handleModeCommandBoth(update tgbotapi.Update, mode string) error {
+	answer := tgbotapi.NewMessage(update.Message.Chat.ID, texts.Mode_both)
+	_, err := handler.Bot.Send(answer)
+	mode = "Both"
 	return err
 }
 
@@ -59,7 +88,7 @@ func (handler *Handler) handleCommandReset(update tgbotapi.Update) error {
 	if errSend != nil {
 		log.Fatal(errSend)
 	}
-	err := handler.sendPoll(update, texts.Start_message)
+	err := handler.sendParticipantPoll(update, texts.Start_message)
 	return err
 }
 
@@ -87,6 +116,15 @@ func (handler *Handler) sendNewRandomParticipants(groupChatId int64) error {
 	return err
 }
 
+func (handler *Handler) SendReminder(groupChatId int64) {
+	answer := tgbotapi.NewMessage(groupChatId, texts.Reminder)
+	_, err := handler.Bot.Send(answer)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+
 func (handler *Handler) SendAllNewRandomParticipants() {
 	groups := handler.Datastore.GetAllGroups()
 	for _, g := range groups {
@@ -106,7 +144,7 @@ func (handler *Handler) handleCommandStop(update tgbotapi.Update) error {
 	return err
 }
 
-func (handler *Handler) sendPoll(update tgbotapi.Update, msgText string) error {
+func (handler *Handler) sendParticipantPoll(update tgbotapi.Update, msgText string) error {
 	answer := tgbotapi.NewMessage(update.Message.Chat.ID, msgText)
 	answer.ParseMode = "MarkdownV2"
 	answer.ReplyMarkup = participationReplyMarkup
@@ -182,6 +220,10 @@ func (handler *Handler) handleDeleteParticipant(update tgbotapi.Update) {
 	}
 }
 
+func (handler *Handler) GetOperationMode() string {
+	return operationMode
+}
+
 /*
 	Pssst! If you discover this, please don't tell anybody!
 */
@@ -195,3 +237,4 @@ func (handler *Handler) SendGoodByeMessage() error {
 	}
 	return errSend
 }
+
