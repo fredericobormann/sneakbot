@@ -36,9 +36,9 @@ func (handler *Handler) HandleMessage(update tgbotapi.Update) {
 	if strings.HasPrefix(msgtext, "/") {
 		if strings.HasPrefix(msgtext, "/start") {
 			err = handler.handleCommandStart(update)
-		} else if strings.HasPrefix(msgtext, "/reset") {
+		} else if strings.HasPrefix(msgtext, "/reset") && (operationMode == "Poll" || operationMode == "Both") {
 			err = handler.handleCommandReset(update)
-		} else if strings.HasPrefix(msgtext, "/draw") {
+		} else if strings.HasPrefix(msgtext, "/draw") && (operationMode == "Poll" || operationMode == "Both") {
 			err = handler.handleCommandDraw(update)
 		} else if strings.HasPrefix(msgtext, "/stop") {
 			err = handler.handleCommandStop(update)
@@ -134,7 +134,6 @@ func (handler *Handler) SendAllNewRandomParticipants() {
 		}
 	}
 }
-
 
 func (handler *Handler) handleCommandStop(update tgbotapi.Update) error {
 	answer := tgbotapi.NewMessage(update.Message.Chat.ID, texts.Stop_message)

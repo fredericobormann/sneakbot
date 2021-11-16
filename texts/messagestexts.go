@@ -1,6 +1,6 @@
 package texts
 
-var Mode_decision_message = "Beep beep\\. In welchem Modus (Erinnerung / Auslosung / Beide) soll der SneakBot gestartet werden\\?"
+var Mode_decision_message = "Beep beep\\. In welchem Modus (/poll, /remind, /both) soll der SneakBot gestartet werden\\?"
 
 var No_groupchat = "Der SneakBot kann nur in Gruppen verwendet werden."
 
@@ -35,5 +35,5 @@ var Mode_reminder = "Alles klar! Ich erinnere euch dann ab jetzt jeden Donnersta
 
 var Mode_polling = "Alles klar! Ich lose ab jetzt wieder wöchentlich Personen aus, die einen Film aussuchen!"
 
-var Mode_both = "Alles klar, das volle Programm! Ich lose wöchentlich Film-Aussucher, und erinner euch jeden Donnerstag " +
+var Mode_both = "Alles klar, das volle Programm! Ich lose wöchentlich Film-Aussucher, und erinnere euch jeden Donnerstag " +
 	"an die Eintragungsdeadline!"

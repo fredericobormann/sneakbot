@@ -62,6 +62,7 @@ func main() {
 		}
 	}()
 
+	scheduler_active := false
 	scheduler := gocron.NewScheduler(time.Local)
 
 	specificTime := time.Date(2021, time.September, 13, 19, 0, 0, 0, time.Local)
@@ -81,18 +82,30 @@ func main() {
 			if chatMember.IsCreator() || chatMember.IsAdministrator() {
 				h.HandleMessage(update)
 				mode := h.GetOperationMode()
-				if mode != "None" {
-					if mode == "Poll" || mode == "Both" {
+				// Prevent multiple Schedulers of the same type
+				if !scheduler_active {
+					if mode == "Both" {
+						_, errScheduler1 := scheduler.Every(1).Monday().At("22:00:00").Do(h.SendAllNewRandomParticipants)
+						if errScheduler1 != nil {
+							log.Println(errScheduler1)
+						}
+						_, errScheduler2 := scheduler.Every(1).Thursday().At("10:00:00").Do(h.SendReminder)
+						if errScheduler2 != nil {
+							log.Println(errScheduler2)
+						}
+						scheduler_active = true
+					} else if mode == "Poll" {
 						_, errScheduler := scheduler.Every(1).Monday().At("22:00:00").Do(h.SendAllNewRandomParticipants)
 						if errScheduler != nil {
 							log.Println(errScheduler)
 						}
-					}
-					if mode == "Remind" || mode == "Both" {
+						scheduler_active = true
+					} else if mode == "Remind" {
 						_, errScheduler := scheduler.Every(1).Thursday().At("10:00:00").Do(h.SendReminder)
 						if errScheduler != nil {
 							log.Println(errScheduler)
 						}
+						scheduler_active = true
 					}
 				}
 			}
